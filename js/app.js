@@ -12,9 +12,9 @@ const ItemCtrl = (function(){
    // Data structure / State
    const data = {
       items: [
-         {id: 0, name: 'Steak Dinner', calories: 1200},
-         {id: 1, name: 'Cookie', calories: 400},
-         {id: 2, name: 'Eggs', calories: 300}
+         // {id: 0, name: 'Steak Dinner', calories: 1200},
+         // {id: 1, name: 'Cookie', calories: 400},
+         // {id: 2, name: 'Eggs', calories: 300}
       ],
       currentItem: null,
       totalCalories: 0
@@ -93,6 +93,33 @@ const UiCtrl = (function(){
       // torna publicos os querySelectors para os event listeners em App
       getSelectors: function(){
          return UiSelectors;
+      },
+      addListItem: function(item){
+         // mosta o elemento <ul>
+         document.querySelector(UiSelectors.itemList).style.display = 'block';
+         // create li element
+         const li = document.createElement('li');
+         // adiciona classe no elemento li
+         li.className = 'collection-item';
+         // adiciona ID
+         li.id = `item-${item.id}`;
+         // addiciona html
+         li.innerHTML = `
+         <strong>${item.name}: </strong> <em>${item.calories} Calories</em>
+         <a href="#" class="secondary-content">
+         <i class="edit-item fa fa-pen"></i>
+         </a>
+         `;
+         // escreve o html
+         document.querySelector(UiSelectors.itemList).insertAdjacentElement('beforeend', li)
+      },
+      clearInput: function(){
+         document.querySelector(UiSelectors.itemNameInput).value = '';
+         document.querySelector(UiSelectors.itemCaloriesInput).value = '';
+      },
+      // esconde o elemento <ul> quando não há itens na lista
+      hideList: function(){
+         document.querySelector(UiSelectors.itemList).style.display = 'none';
       }
    }
    
@@ -116,8 +143,13 @@ const App = (function(ItemCtrl, UiCtrl){
 
       // verifica se há valor em Meal e Calories
       if (input.name !== '' && input.calories !== '') {
-         // adiciona item
+         // adiciona item na estrutura de dados
          const newItem = ItemCtrl.addItem(input.name, input.calories);
+         // adiciona item na interface
+         UiCtrl.addListItem(newItem);
+
+         // limpa campos do formulario
+         UiCtrl.clearInput();
       }
 
       e.preventDefault();
@@ -131,8 +163,14 @@ const App = (function(ItemCtrl, UiCtrl){
          // avalia dados da estrutura de dados
          const items = ItemCtrl.getItems();
 
-         // preenche lista com items
-         UiCtrl.populateItemList(items);
+         // esconde elemento <ul> se houverem 0 itens
+         if (items.length === 0) {
+            UiCtrl.hideList();
+         } else {
+            // preenche lista com items
+            UiCtrl.populateItemList(items);
+         }
+
 
          // carrega eventListeners
          loadEventListeners();
