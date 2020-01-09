@@ -3,7 +3,7 @@
 // item controller
 const ItemCtrl = (function(){
    // Item Constructor 
-   const Item = (id, name, calories) => {
+   const Item = function(id, name, calories) {
       this.id = id;
       this.name = name;
       this.calories = calories;
@@ -24,6 +24,29 @@ const ItemCtrl = (function(){
    return {
       getItems: function(){
          return data.items;
+      },
+      addItem: function(name, calories){
+         let ID;
+         // cria e define ID
+         if (data.items.length > 0) {
+            ID = data.items[data.items.length - 1 ].id + 1; // logica de auto incremento que leva em conta que arrays comecam contando a partir de 0
+         } else {
+            ID = 0;
+         }
+
+         // calories para numeros
+         calories = parseInt(calories);
+
+         newItem = new Item(ID, name, calories);
+
+         // adiciona ao array de items
+         data.items.push(newItem);
+
+         return newItem;
+
+      },
+      logData: function(){
+         return data;
       }
    }
 
@@ -32,7 +55,10 @@ const ItemCtrl = (function(){
 // ui controller
 const UiCtrl = (function(){
    const UiSelectors = {
-      itemList: '#item-list'
+      itemList: '#item-list',
+      addBtn: '.add-btn',
+      itemNameInput: '#item-name',
+      itemCaloriesInput: '#item-calories'
    }
 
    // torna publicos os metodos
@@ -55,6 +81,18 @@ const UiCtrl = (function(){
          // insere lista de items
          // document.querySelector('item-list').innerHTML = html; // seletor pode mudar, então foi melhor criar um objeto para lidar com os seletores
          document.querySelector(UiSelectors.itemList).innerHTML = html;
+
+      },
+      // pega input do form
+      getItemInput: function(){
+         return {
+            name:document.querySelector(UiSelectors.itemNameInput).value,
+            calories:document.querySelector(UiSelectors.itemCaloriesInput).value
+         }
+      },
+      // torna publicos os querySelectors para os event listeners em App
+      getSelectors: function(){
+         return UiSelectors;
       }
    }
    
@@ -62,6 +100,28 @@ const UiCtrl = (function(){
 
 // app controller
 const App = (function(ItemCtrl, UiCtrl){
+   // carrega todos os event listeners
+   const loadEventListeners = function(){
+      // pega os seletores de UI
+      const UiSelectors = UiCtrl.getSelectors();
+
+      // evento para adicionar itens
+      document.querySelector(UiSelectors.addBtn).addEventListener('click', itemAddSubmit);
+   }
+
+   // submit de adicionar item
+   const itemAddSubmit = function(e){
+      // pega input do form de UiCtrl
+      const input = UiCtrl.getItemInput();
+
+      // verifica se há valor em Meal e Calories
+      if (input.name !== '' && input.calories !== '') {
+         // adiciona item
+         const newItem = ItemCtrl.addItem(input.name, input.calories);
+      }
+
+      e.preventDefault();
+   }
 
    // torna publicos os metodos
    return {
@@ -73,6 +133,9 @@ const App = (function(ItemCtrl, UiCtrl){
 
          // preenche lista com items
          UiCtrl.populateItemList(items);
+
+         // carrega eventListeners
+         loadEventListeners();
       }
    }
 })(ItemCtrl, UiCtrl);
