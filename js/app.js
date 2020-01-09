@@ -25,6 +25,7 @@ const ItemCtrl = (function(){
       getItems: function(){
          return data.items;
       },
+
       addItem: function(name, calories){
          let ID;
          // cria e define ID
@@ -45,6 +46,22 @@ const ItemCtrl = (function(){
          return newItem;
 
       },
+
+      getTotalCalories: function(){
+         let total = 0;
+
+         // passa atraves dos itens e suas calorias
+         data.items.forEach(function(item){
+            total += item.calories;
+         });
+
+         // define total de calorias na estrutura de dados
+         data.totalCalories = total;
+
+         // retorna total de calorias
+         return data.totalCalories;
+      },
+
       logData: function(){
          return data;
       }
@@ -58,7 +75,8 @@ const UiCtrl = (function(){
       itemList: '#item-list',
       addBtn: '.add-btn',
       itemNameInput: '#item-name',
-      itemCaloriesInput: '#item-calories'
+      itemCaloriesInput: '#item-calories',
+      totalCalories: '.total-calories'
    }
 
    // torna publicos os metodos
@@ -113,6 +131,13 @@ const UiCtrl = (function(){
          // escreve o html
          document.querySelector(UiSelectors.itemList).insertAdjacentElement('beforeend', li)
       },
+
+      // mostra total de calorias na interface
+      showTotalCalories: function(totalCalories){
+         document.querySelector(UiSelectors.totalCalories).textContent= totalCalories;
+      },
+
+      // limpa os campos do formulario apos submeter item
       clearInput: function(){
          document.querySelector(UiSelectors.itemNameInput).value = '';
          document.querySelector(UiSelectors.itemCaloriesInput).value = '';
@@ -148,6 +173,11 @@ const App = (function(ItemCtrl, UiCtrl){
          // adiciona item na interface
          UiCtrl.addListItem(newItem);
 
+         // pega total de calorias
+         const totalCalories = ItemCtrl.getTotalCalories();
+         // adiciona total de calorias na interface
+         UiCtrl.showTotalCalories(totalCalories);
+
          // limpa campos do formulario
          UiCtrl.clearInput();
       }
@@ -171,6 +201,11 @@ const App = (function(ItemCtrl, UiCtrl){
             UiCtrl.populateItemList(items);
          }
 
+         // ao utilizar localStorage, insere os itens em localStorage na interface
+         // pega total de calorias
+         const totalCalories = ItemCtrl.getTotalCalories();
+         // adiciona total de calorias na interface
+         UiCtrl.showTotalCalories(totalCalories);
 
          // carrega eventListeners
          loadEventListeners();
