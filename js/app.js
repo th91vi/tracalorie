@@ -47,6 +47,28 @@ const ItemCtrl = (function(){
 
       },
 
+      getItemById: function(id){
+         let found = null;
+
+         // avalia os items
+         data.items.forEach(function(item){
+            if(item.id === id){
+               found = item;
+            }
+         })
+
+         // retorna item atraves da variavel found
+         return found;
+      },
+
+      setCurrentItem: function(item){
+         data.currentItem = item;
+      },
+
+      getCurrentItem: function(){
+         return data.currentItem;
+      },
+
       getTotalCalories: function(){
          let total = 0;
 
@@ -74,6 +96,9 @@ const UiCtrl = (function(){
    const UiSelectors = {
       itemList: '#item-list',
       addBtn: '.add-btn',
+      updateBtn:'.update-btn',
+      deleteBtn:'.delete-btn',
+      backBtn:'.back-btn',
       itemNameInput: '#item-name',
       itemCaloriesInput: '#item-calories',
       totalCalories: '.total-calories'
@@ -142,9 +167,36 @@ const UiCtrl = (function(){
          document.querySelector(UiSelectors.itemNameInput).value = '';
          document.querySelector(UiSelectors.itemCaloriesInput).value = '';
       },
+
+      // insere propriedades do item no form ao editar
+      addItemToForm: function(){
+         document.querySelector(UiSelectors.itemNameInput).value = ItemCtrl.getCurrentItem().name;
+         document.querySelector(UiSelectors.itemCaloriesInput).value = ItemCtrl.getCurrentItem().calories;
+
+         // exibe item de editar na interface
+         UiCtrl.showEditState();
+      },
+      
       // esconde o elemento <ul> quando não há itens na lista
       hideList: function(){
          document.querySelector(UiSelectors.itemList).style.display = 'none';
+      },
+
+      clearEditState: function(){
+         UiCtrl.clearInput();
+
+         // esconde os botoes de update, delete e back; quando nao estiver em edit state
+         document.querySelector(UiSelectors.updateBtn).style.display = 'none';
+         document.querySelector(UiSelectors.deleteBtn).style.display = 'none';
+         document.querySelector(UiSelectors.backBtn).style.display = 'none';
+         document.querySelector(UiSelectors.addBtn).style.display = 'inline';
+      },
+
+      showEditState: function(){
+         document.querySelector(UiSelectors.updateBtn).style.display = 'inline';
+         document.querySelector(UiSelectors.deleteBtn).style.display = 'inline';
+         document.querySelector(UiSelectors.backBtn).style.display = 'inline';
+         document.querySelector(UiSelectors.addBtn).style.display = 'none';
       }
    }
    
@@ -159,6 +211,9 @@ const App = (function(ItemCtrl, UiCtrl){
 
       // evento para adicionar itens
       document.querySelector(UiSelectors.addBtn).addEventListener('click', itemAddSubmit);
+
+      // evento para editar ao clicar no icone de editar; eh uma selecao indireta (event delegation), pois o elemento so eh criado apos a pagina ser carregada
+      document.querySelector(UiSelectors.itemList).addEventListener('click', itemUpdateSubmit);
    }
 
    // submit de adicionar item
@@ -185,10 +240,37 @@ const App = (function(ItemCtrl, UiCtrl){
       e.preventDefault();
    }
 
+   const itemUpdateSubmit = function(e){
+      // torna especifico o clique no icone de editar, senao o evento dispara ao clicar em qualquer lugar da lista
+      if(e.target.classList.contains('edit-item')){
+         // pega id do item na lista, que eh o 'avo' do icone de editar
+         const listId = e.target.parentNode.parentNode.id;
+         
+         // faz split e transforma a string recebida do elemento HTML (e.target.parentNode.parentNode.id) em um array, para depois extrairmos apenas o numero de id
+         const listIdArr = listId.split('-');
+         
+         // pega o numero da id
+         const id = parseInt(listIdArr[1]);
+
+         // pega id do item
+         const itemToEdit = ItemCtrl.getItemById(id);
+
+         // define item a ser editado como currentItem
+         ItemCtrl.setCurrentItem(itemToEdit);
+
+         // insere propriedades do item no form
+         UiCtrl.addItemToForm();
+      }
+      e.preventDefault();
+   }
+
    // torna publicos os metodos
    return {
       init: () => {
          console.log('Init OK');
+
+         // estado inicial, com edit state limpo
+         UiCtrl.clearEditState();
 
          // avalia dados da estrutura de dados
          const items = ItemCtrl.getItems();
