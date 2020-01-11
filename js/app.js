@@ -79,6 +79,31 @@ const ItemCtrl = (function(){
          return found;
       },
 
+      deleteItem: function(id){
+         const ids = data.items.map(function(item){
+            return item.id; // retorna um array de ids
+         });
+         console.log(ids);
+
+         // pega indice da id
+         const index = ids.indexOf(id);
+
+         // remove item da estrutura de dados
+         data.items.splice(index,1);
+
+         // pega total de calorias
+         const totalCalories = ItemCtrl.getTotalCalories();
+         // atualiza total de calorias na interface
+         UiCtrl.showTotalCalories(totalCalories);
+
+         // encerra estado de edicao
+         UiCtrl.clearEditState();
+      },
+
+      clearAllItems: function(){
+         data.items = [];
+      },
+
       setCurrentItem: function(item){
          data.currentItem = item;
       },
@@ -118,6 +143,7 @@ const UiCtrl = (function(){
       updateBtn:'.update-btn',
       deleteBtn:'.delete-btn',
       backBtn:'.back-btn',
+      clearBtn: '.clear-btn',
       itemNameInput: '#item-name',
       itemCaloriesInput: '#item-calories',
       totalCalories: '.total-calories'
@@ -197,6 +223,23 @@ const UiCtrl = (function(){
          })
       },
 
+      deleteListItem: function(id){
+         const itemId = `#item-${id}`;
+         const item = document.querySelector(itemId);
+         item.remove();
+      },
+
+      removeItems: function(){
+         let listItems = document.querySelectorAll(UiSelectors.listItems);
+
+         // transforma nodelist de listItems em array
+         listItems = Array.from(listItems);
+
+         listItems.forEach(function(item){
+            item.remove();
+         })
+      },
+
       // mostra total de calorias na interface
       showTotalCalories: function(totalCalories){
          document.querySelector(UiSelectors.totalCalories).textContent= totalCalories;
@@ -265,6 +308,15 @@ const App = (function(ItemCtrl, UiCtrl){
 
       // evento de atualizacao de item
       document.querySelector(UiSelectors.updateBtn).addEventListener('click', itemUpdateSubmit);
+      
+      // evento de delete de item
+      document.querySelector(UiSelectors.deleteBtn).addEventListener('click', itemDeleteSubmit);
+      
+      // evento do botao de voltar, para limpar o estado de edicao
+      document.querySelector(UiSelectors.backBtn).addEventListener('click', UiCtrl.clearEditState);
+
+      // evento de apagar todos os itens
+      document.querySelector(UiSelectors.clearBtn).addEventListener('click', clearAllItemsClick);
    }
 
    // submit de adicionar item
@@ -333,6 +385,37 @@ const App = (function(ItemCtrl, UiCtrl){
 
       // encerra estado de edicao
       UiCtrl.clearEditState();
+   }
+
+   // evento do botao de delete 
+   const itemDeleteSubmit = function(e){
+      // pega id de current item
+      const currentItem = ItemCtrl.getCurrentItem();
+
+      // apaga da estrutura de dados
+      ItemCtrl.deleteItem(currentItem.id);
+
+      // apaga da interface
+      UiCtrl.deleteListItem(currentItem.id);
+
+      e.preventDefault();
+   }
+
+   // evento que apaga todos os itens
+   const clearAllItemsClick = function(){
+      // apaga todos os itens da estrutura de dados
+      ItemCtrl.clearAllItems();
+
+      // remove todos os itens da interface
+      UiCtrl.removeItems();
+
+      // pega total de calorias
+      const totalCalories = ItemCtrl.getTotalCalories();
+      // atualiza total de calorias na interface
+      UiCtrl.showTotalCalories(totalCalories);
+
+      // esconde elemento ul, tirando a linha embaixo do total de calorias
+      UiCtrl.hideList();
    }
 
    // torna publicos os metodos
