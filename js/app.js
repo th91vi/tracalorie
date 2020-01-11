@@ -2,7 +2,7 @@
 
 // item controller
 const ItemCtrl = (function(){
-   // Item Constructor 
+   // Item Constructor
    const Item = function(id, name, calories) {
       this.id = id;
       this.name = name;
@@ -61,6 +61,24 @@ const ItemCtrl = (function(){
          return found;
       },
 
+      updateItem: function(name, calories){ // os parametros desta funcao estao vindo dos valores da variavel "input", definada na funcao "itemUpdateSubmit"
+         // transforma valores do input em numero 
+         calories = parseInt(calories);
+
+         let found = null;
+
+         data.items.forEach(function(item){
+            if (item.id === data.currentItem.id) {
+               item.name = name;    
+               item.calories = calories;
+               found = item;     
+            }
+         });
+
+         // atualiza item na estrutura de dados
+         return found;
+      },
+
       setCurrentItem: function(item){
          data.currentItem = item;
       },
@@ -95,6 +113,7 @@ const ItemCtrl = (function(){
 const UiCtrl = (function(){
    const UiSelectors = {
       itemList: '#item-list',
+      listItems: '#item-list li',
       addBtn: '.add-btn',
       updateBtn:'.update-btn',
       deleteBtn:'.delete-btn',
@@ -109,7 +128,7 @@ const UiCtrl = (function(){
       populateItemList: function(items){ // este metodo é chamado assim que a página carrega
          // let html;
          let html = ''; // apenas declarar a variavel deixa seu tipo como undefined; a declaramos abaixo como uma STRING vazia
-         
+
          items.forEach(function(item){
             html += `
                <li class="collection-item" id="item-${item.id}">
@@ -137,6 +156,7 @@ const UiCtrl = (function(){
       getSelectors: function(){
          return UiSelectors;
       },
+
       addListItem: function(item){
          // mosta o elemento <ul>
          document.querySelector(UiSelectors.itemList).style.display = 'block';
@@ -155,6 +175,26 @@ const UiCtrl = (function(){
          `;
          // escreve o html
          document.querySelector(UiSelectors.itemList).insertAdjacentElement('beforeend', li)
+      },
+
+      updateListItem: function(updatedItem){
+         let listItems = document.querySelectorAll(UiSelectors.listItems); // retorna uma nodelist
+
+         // converte nodelist em um array
+         listItems = Array.from(listItems);
+
+         listItems.forEach(function(listItem){
+            const itemId = listItem.getAttribute('id');
+
+            if (itemId === `item-${updatedItem.id}`) {
+               document.querySelector(`#${itemId}`).innerHTML = `
+               <strong>${updatedItem.name}: </strong> <em>${updatedItem.calories} Calories</em>
+               <a href="#" class="secondary-content">
+               <i class="edit-item fa fa-pen"></i>
+               </a>
+               `;
+            }
+         })
       },
 
       // mostra total de calorias na interface
@@ -176,7 +216,7 @@ const UiCtrl = (function(){
          // exibe item de editar na interface
          UiCtrl.showEditState();
       },
-      
+
       // esconde o elemento <ul> quando não há itens na lista
       hideList: function(){
          document.querySelector(UiSelectors.itemList).style.display = 'none';
@@ -199,7 +239,7 @@ const UiCtrl = (function(){
          document.querySelector(UiSelectors.addBtn).style.display = 'none';
       }
    }
-   
+
 })();
 
 // app controller
@@ -212,8 +252,19 @@ const App = (function(ItemCtrl, UiCtrl){
       // evento para adicionar itens
       document.querySelector(UiSelectors.addBtn).addEventListener('click', itemAddSubmit);
 
+      // desabilita tecla enter para submit, para evitar que a acao errada seja acionado ao apertar enter\
+      document.addEventListener('keypress', function(e){
+         if(e.keyCode === 13 || e.which === 13){ // aqui usamos e.which como fallback para navegadores velhos
+            e.preventDefault();
+            return false;
+         }
+      })
+
       // evento para editar ao clicar no icone de editar; eh uma selecao indireta (event delegation), pois o elemento so eh criado apos a pagina ser carregada
-      document.querySelector(UiSelectors.itemList).addEventListener('click', itemUpdateSubmit);
+      document.querySelector(UiSelectors.itemList).addEventListener('click', itemEditClick);
+
+      // evento de atualizacao de item
+      document.querySelector(UiSelectors.updateBtn).addEventListener('click', itemUpdateSubmit);
    }
 
    // submit de adicionar item
@@ -240,15 +291,15 @@ const App = (function(ItemCtrl, UiCtrl){
       e.preventDefault();
    }
 
-   const itemUpdateSubmit = function(e){
+   const itemEditClick = function(e){
       // torna especifico o clique no icone de editar, senao o evento dispara ao clicar em qualquer lugar da lista
       if(e.target.classList.contains('edit-item')){
          // pega id do item na lista, que eh o 'avo' do icone de editar
          const listId = e.target.parentNode.parentNode.id;
-         
+
          // faz split e transforma a string recebida do elemento HTML (e.target.parentNode.parentNode.id) em um array, para depois extrairmos apenas o numero de id
          const listIdArr = listId.split('-');
-         
+
          // pega o numero da id
          const id = parseInt(listIdArr[1]);
 
@@ -262,6 +313,26 @@ const App = (function(ItemCtrl, UiCtrl){
          UiCtrl.addItemToForm();
       }
       e.preventDefault();
+   }
+
+   const itemUpdateSubmit = function(e){
+      // pega valores nos campos do form
+      const input = UiCtrl.getItemInput();
+
+      // atualiza item; input abaixo eh a variavel declarada acima
+      const updatedItem = ItemCtrl.updateItem(input.name, input.calories);
+
+      // atualiza valores na interface
+      UiCtrl.updateListItem(updatedItem);
+      e.preventDefault();
+
+      // pega total de calorias
+      const totalCalories = ItemCtrl.getTotalCalories();
+      // atualiza total de calorias na interface
+      UiCtrl.showTotalCalories(totalCalories);
+
+      // encerra estado de edicao
+      UiCtrl.clearEditState();
    }
 
    // torna publicos os metodos
