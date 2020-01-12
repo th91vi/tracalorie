@@ -2,7 +2,7 @@
 const StorageCtrl = (function(){
    // torna publicos os metodos
    return {
-      storeItem: function(item){
+      storeItemToStorage: function(item){
          let items;
 
          // verifica se existem itens em localStorage
@@ -17,6 +17,9 @@ const StorageCtrl = (function(){
          } else {
             // pega items armazenado em localStorage e o converte em um objeto javascript
             items = JSON.parse(localStorage.getItem('items'));
+
+            // insere novo item
+            items.push(item);
 
             // redefine items e armazena em localStorage, como string
             localStorage.setItem('items', JSON.stringify(items));
@@ -35,6 +38,38 @@ const StorageCtrl = (function(){
          }
 
          return items;
+      },
+
+      updateItemStorage: function(updatedItem){
+         let items = JSON.parse(localStorage.getItem('items'));
+
+         items.forEach(function(item, index){
+            if(updatedItem.id === item.id){
+               // apaga o item com o id atual e o substitui por updatedItem
+               items.splice(index, 1, updatedItem);
+            }
+         });
+
+         // redefine items e armazena em localStorage, como string
+         localStorage.setItem('items', JSON.stringify(items));
+      },
+
+      deleteItemFromStorage: function(id){
+         let items = JSON.parse(localStorage.getItem('items'));
+
+         items.forEach(function(item, index){
+            if(id === item.id){
+               // apaga o item com o id atual e o substitui por updatedItem
+               items.splice(index, 1);
+            }
+         });
+
+         // redefine items e armazena em localStorage, como string
+         localStorage.setItem('items', JSON.stringify(items));
+      },
+
+      clearItemsFromStorage: function(){
+         localStorage.removeItem('items');
       }
    }
 })();
@@ -118,7 +153,6 @@ const ItemCtrl = (function(){
          const ids = data.items.map(function(item){
             return item.id; // retorna um array de ids
          });
-         console.log(ids);
 
          // pega indice da id
          const index = ids.indexOf(id);
@@ -371,8 +405,8 @@ const App = (function(ItemCtrl, StorageCtrl, UiCtrl){
          // adiciona total de calorias na interface
          UiCtrl.showTotalCalories(totalCalories);
 
-         // ar mazena em localStorage
-         StorageCtrl.storeItem(newItem);
+         // armazena em localStorage
+         StorageCtrl.storeItemToStorage(newItem);
          
          // limpa campos do formulario
          UiCtrl.clearInput();
@@ -421,6 +455,9 @@ const App = (function(ItemCtrl, StorageCtrl, UiCtrl){
       // atualiza total de calorias na interface
       UiCtrl.showTotalCalories(totalCalories);
 
+      // atualiza localStorage
+      StorageCtrl.updateItemStorage(updatedItem);
+
       // encerra estado de edicao
       UiCtrl.clearEditState();
    }
@@ -432,6 +469,9 @@ const App = (function(ItemCtrl, StorageCtrl, UiCtrl){
 
       // apaga da estrutura de dados
       ItemCtrl.deleteItem(currentItem.id);
+
+      // apaga de localStorage
+      StorageCtrl.deleteItemFromStorage(currentItem.id);
 
       // apaga da interface
       UiCtrl.deleteListItem(currentItem.id);
@@ -451,6 +491,9 @@ const App = (function(ItemCtrl, StorageCtrl, UiCtrl){
       const totalCalories = ItemCtrl.getTotalCalories();
       // atualiza total de calorias na interface
       UiCtrl.showTotalCalories(totalCalories);
+
+      // apaga todos os itens de localStorage
+      StorageCtrl.clearItemsFromStorage();
 
       // esconde elemento ul, tirando a linha embaixo do total de calorias
       UiCtrl.hideList();
